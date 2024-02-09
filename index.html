@@ -82,8 +82,8 @@
                         for (d in r) {
                             const tdnode = document.createElement("td");
                             const textnode = document.createTextNode(r[d]);
-                            if(d == "User State") {
-                                if(r[d] == "Locked"){
+                            if (d == "User State") {
+                                if (r[d] == "Locked") {
                                     tdnode.setAttribute("class", "locked");
                                 }
                             }
@@ -115,8 +115,9 @@
                             allElements[i].disabled = false;
                         }
                         var keeprunning = document.getElementById("keeprunning");
-                        if(keeprunning.checked) {
-                            setTimeout(GetLockOutStatus, 10000);
+                        var checkinterval = document.getElementById("checkinterval");
+                        if (keeprunning.checked) {
+                            setTimeout(GetLockOutStatus, checkinterval.value*1000);
                         }
                     }
                 }
@@ -124,6 +125,29 @@
             xmlrequest.open("POST", "/api", true);
             xmlrequest.setRequestHeader("Content-type", "application/json");
             xmlrequest.send(JSON.stringify({ 'command': 'getstate' }));
+        }
+
+        function UnlockAccount() {
+            var controls = document.getElementById("controls");
+            var allElements = controls.childNodes;
+            for (var i = 0, l = allElements.length; i < l; ++i) {
+                allElements[i].disabled = true;
+            }
+
+            var xmlrequest = new XMLHttpRequest();
+            xmlrequest.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    var controls = document.getElementById("controls");
+                    var allElements = controls.childNodes;
+                    for (var i = 0, l = allElements.length; i < l; ++i) {
+                        allElements[i].disabled = false;
+                    }
+                }
+            }
+            let username = document.getElementById("username").value;
+            xmlrequest.open("POST", "/api", true);
+            xmlrequest.setRequestHeader("Content-type", "application/json");
+            xmlrequest.send(JSON.stringify({ 'command': 'unlock', 'user': username }));
         }
 
         function DoExit() {
@@ -146,12 +170,20 @@
     <div id="controls">
         <label for="username">Username: </label><input id="username" type="text" name="username" />
         <button onclick="GetLockOutStatus()">Start Lockout Query</button>
+        <button onclick="UnlockAccount()">Unlock Account</button>
         <!-- <button onclick="GetLockOutData()">Get Lockout Status</button> -->
         <button onclick="DoExit()">Exit</button>
     </div>
     <div>
-        <label for="keeprunning">Auto-Refresh (every 10 seconds): </label>
-        <input type="checkbox" id="keeprunning" name="keeprunning"/>
+        <label for="keeprunning">Auto-Refresh: </label>
+        <input type="checkbox" id="keeprunning" name="keeprunning" />
+        <label for="checkinterval">Auto-Refresh interval: </label>
+        <select id="checkinterval">
+            <option value="5">5 seconds</option>
+            <option value="10">10 seconds</option>
+            <option value="20">10 seconds</option>
+            <option value="30" selected>30 seconds</option>
+        </select>
     </div>
     <table class="mytable">
         <thead>

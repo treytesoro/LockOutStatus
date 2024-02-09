@@ -18,6 +18,7 @@ if ( (Get-Module | Where-Object Name -eq 'ThreadJob').Count -lt 1 ) {
     Write-Host "ThreadJob module is required. Adding module..."
     Install-Module ThreadJob -Repository PSGallery | Out-Null
     Import-Module ThreadJob | Out-Null
+    Import-Module ActiveDirectory | Out-Null
     Write-Output ""
 }
 
@@ -39,12 +40,12 @@ $listener.Prefixes.Add($url)
 $listener.Start()
 
 Start-Process "$baseURL`:$port/" # Should open the webpage in your default browser
-
+Write-Host "**Do not close this terminal! Doing so will close the web server.**"
 Write-Host "Listening for incoming connections on $baseURL`:$port/"
 Write-Host ""
 Write-Host "To exit the server, use the Exit button on the webpage, or execute the following command:"
 Write-Host ""
-Write-Host 'curl -v -H "Content-Type: application/json" http://localhost:9298/api -d "{\"command\": \"exit\"}"'
+Write-Host '    curl -v -H "Content-Type: application/json" http://localhost:9298/api -d "{\"command\": \"exit\"}"'
 
 $query = @{
     value    = "";
@@ -178,7 +179,7 @@ do {
             };
         
             # We need to wait for all jobs to finish now
-            Get-Job | Wait-Job | Out-Null;
+            # Get-Job | Wait-Job | Out-Null;
         
         }
         
@@ -266,6 +267,22 @@ do {
                     if ($threaddata.isRunning) {
                         $json = '{"status": "ok", "isRunning": true}';
                     }
+                    
+                    $content = $json;
+                    $buffer = [System.Text.Encoding]::UTF8.GetBytes($content)
+
+                    # Send the response
+                    $response.ContentType = "application/json";
+                    $response.ContentLength64 = $buffer.Length
+                    $output = $response.OutputStream
+                    $output.Write($buffer, 0, $buffer.Length)
+                    $output.Close()
+                }
+
+                if ($reqdata.command -eq "unlock") {
+                    $user = $reqdata.user;
+                    Unlock-AdAccount -Identity $user
+                    $json = '{"status": "ok"}';
                     
                     $content = $json;
                     $buffer = [System.Text.Encoding]::UTF8.GetBytes($content)
