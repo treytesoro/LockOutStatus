@@ -114,6 +114,10 @@
                         for (var i = 0, l = allElements.length; i < l; ++i) {
                             allElements[i].disabled = false;
                         }
+                        var keeprunning = document.getElementById("keeprunning");
+                        if(keeprunning.checked) {
+                            setTimeout(GetLockOutStatus, 10000);
+                        }
                     }
                 }
             }
@@ -144,6 +148,10 @@
         <button onclick="GetLockOutStatus()">Start Lockout Query</button>
         <!-- <button onclick="GetLockOutData()">Get Lockout Status</button> -->
         <button onclick="DoExit()">Exit</button>
+    </div>
+    <div>
+        <label for="keeprunning">Auto-Refresh (every 10 seconds): </label>
+        <input type="checkbox" id="keeprunning" name="keeprunning"/>
     </div>
     <table class="mytable">
         <thead>
